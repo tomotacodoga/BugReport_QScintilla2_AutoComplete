@@ -6,10 +6,10 @@ This repository is the project reproducing the following 2 probelms in QScintill
 
 
 ![Method completion1 (expected)](/images/method-completion-expected.png "Method completion1 (expected)")
-![Method completion1 (current)](/images/method-completion-curret.png "Method completion1 (current)")
+![Method completion1 (current)](/images/method-completion-current.png "Method completion1 (current)")
 
 ![Method completion2 (expected)](/images/method-completion2-expected.png "Method completion2 (expected)")
-![Method completion2 (current)](/images/method-completion2-curret.png "Method completion2 (current)")
+![Method completion2 (current)](/images/method-completion2-current.png "Method completion2 (current)")
 
 - Call tip is incorrectly trimmed at setCallTipStyle(CallTipsContext).
 
