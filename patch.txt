@@ -1,0 +1,192 @@
+diff -c -b -r TestAC/QScintilla_gpl-2.9.2/Qt4Qt5/Qsci/qsciapis.h TestAC-fixed/QScintilla_gpl-2.9.2/Qt4Qt5/Qsci/qsciapis.h
+*** TestAC/QScintilla_gpl-2.9.2/Qt4Qt5/Qsci/qsciapis.h	2016-04-18 10:08:48.000000000 +0900
+--- TestAC-fixed/QScintilla_gpl-2.9.2/Qt4Qt5/Qsci/qsciapis.h	2016-07-01 21:43:28.642298000 +0900
+***************
+*** 203,210 ****
+      const WordIndexList *wordIndexOf(const QString &word) const;
+      void lastCompleteWord(const QString &word, QStringList &with_context,
+              bool &unambig);
+!     void lastPartialWord(const QString &word, QStringList &with_context,
+              bool &unambig);
+      void addAPIEntries(const WordIndexList &wl, bool complete,
+              QStringList &with_context, bool &unambig);
+      QString prepName(const QString &filename, bool mkpath = false) const;
+--- 203,215 ----
+      const WordIndexList *wordIndexOf(const QString &word) const;
+      void lastCompleteWord(const QString &word, QStringList &with_context,
+              bool &unambig);
+!     void lastPartialWord(const QStringList &new_context, QStringList &with_context,
+              bool &unambig);
++ 
++     QList<QSet<quint32>> getEntryIndexSetContext(const QStringList &new_context) const;
++     bool doesEntryExistContext(quint32 indexEntry, const QList<QSet<quint32>>& entryIndexSetContext) const;
++     WordIndexList QsciAPIs::filterWordIndexByContext(const WordIndexList& wordIndexList, int indexContextLast, const QList<QSet<quint32>>& entryIndexSetContext) const;
++ 
+      void addAPIEntries(const WordIndexList &wl, bool complete,
+              QStringList &with_context, bool &unambig);
+      QString prepName(const QString &filename, bool mkpath = false) const;
+diff -c -b -r TestAC/QScintilla_gpl-2.9.2/Qt4Qt5/qsciapis.cpp TestAC-fixed/QScintilla_gpl-2.9.2/Qt4Qt5/qsciapis.cpp
+*** TestAC/QScintilla_gpl-2.9.2/Qt4Qt5/qsciapis.cpp	2016-04-18 10:08:48.000000000 +0900
+--- TestAC-fixed/QScintilla_gpl-2.9.2/Qt4Qt5/qsciapis.cpp	2016-07-01 21:42:54.450332600 +0900
+***************
+*** 28,33 ****
+--- 28,34 ----
+  #include <QEvent>
+  #include <QFile>
+  #include <QLibraryInfo>
++ #include <QSet>
+  #include <QMap>
+  #include <QTextStream>
+  #include <QThread>
+***************
+*** 464,470 ****
+          if (new_context.last().isEmpty())
+              lastCompleteWord(new_context[new_context.count() - 2], with_context, unambig);
+          else
+!             lastPartialWord(new_context.last(), with_context, unambig);
+  
+          for (int i = 0; i < with_context.count(); ++i)
+          {
+--- 465,471 ----
+          if (new_context.last().isEmpty())
+              lastCompleteWord(new_context[new_context.count() - 2], with_context, unambig);
+          else
+!             lastPartialWord(new_context, with_context, unambig);
+  
+          for (int i = 0; i < with_context.count(); ++i)
+          {
+***************
+*** 524,531 ****
+  
+  
+  // Add auto-completion words based on the last partial word entered.
+! void QsciAPIs::lastPartialWord(const QString &word, QStringList &with_context, bool &unambig)
+  {
+      if (lexer()->caseSensitive())
+      {
+          QMap<QString, WordIndexList>::const_iterator it = prep->wdict.lowerBound(word);
+--- 525,535 ----
+  
+  
+  // Add auto-completion words based on the last partial word entered.
+! void QsciAPIs::lastPartialWord(const QStringList &new_context, QStringList &with_context, bool &unambig)
+  {
++     QList<QSet<quint32>> entryIndexSetContext = getEntryIndexSetContext(new_context);
++ 
++     auto word = new_context.last();
+      if (lexer()->caseSensitive())
+      {
+          QMap<QString, WordIndexList>::const_iterator it = prep->wdict.lowerBound(word);
+***************
+*** 535,541 ****
+              if (!it.key().startsWith(word))
+                  break;
+  
+!             addAPIEntries(it.value(), false, with_context, unambig);
+  
+              ++it;
+          }
+--- 539,549 ----
+              if (!it.key().startsWith(word))
+                  break;
+  
+!             WordIndexList wordIndexListFiltered = filterWordIndexByContext(it.value(),
+!                                                                            new_context.length() - 1,
+!                                                                            entryIndexSetContext);
+! 
+!             addAPIEntries(wordIndexListFiltered, false, with_context, unambig);
+  
+              ++it;
+          }
+***************
+*** 549,561 ****
+              if (!it.key().startsWith(word))
+                  break;
+  
+!             addAPIEntries(prep->wdict[it.value()], false, with_context, unambig);
+  
+              ++it;
+          }
+      }
+  }
+  
+  
+  // Handle the selection of an entry in the auto-completion list.
+  void QsciAPIs::autoCompletionSelected(const QString &selection)
+--- 557,615 ----
+              if (!it.key().startsWith(word))
+                  break;
+  
+!             auto wordIndexList = prep->wdict[it.value()];
+!             WordIndexList wordIndexListFiltered = filterWordIndexByContext(wordIndexList,
+!                                                                            new_context.length() - 1,
+!                                                                            entryIndexSetContext);
+! 
+!             addAPIEntries(wordIndexListFiltered, false, with_context, unambig);
+  
+              ++it;
+          }
+      }
+  }
+  
++ QList<QSet<quint32>> QsciAPIs::getEntryIndexSetContext(const QStringList &new_context) const
++ {
++     QList<QSet<quint32>> entryIndexSetContext;
++     for (int indexContext = 0; indexContext < new_context.length() - 1; indexContext ++)
++     {
++         QSet<quint32> entryIndexSet;
++         auto wordIndexList = wordIndexOf(new_context[indexContext]);
++         for (auto it = wordIndexList->cbegin(); it != wordIndexList->cend(); ++ it)
++         {
++             if (indexContext != (*it).second) continue;
++             entryIndexSet.insert((*it).first);
++         }
++         entryIndexSetContext.push_back(entryIndexSet);
++     }
++     return entryIndexSetContext;
++ }
++ 
++ bool QsciAPIs::doesEntryExistContext(quint32 indexEntry, const QList<QSet<quint32>>& entryIndexSetContext) const
++ {
++     for (auto entryIndexSet : entryIndexSetContext)
++     {
++         if (!entryIndexSet.contains(indexEntry)) return false;
++     }
++     return true;
++ }
++ 
++ QsciAPIs::WordIndexList QsciAPIs::filterWordIndexByContext(const WordIndexList& wordIndexList, int indexContextLast, const QList<QSet<quint32>>& entryIndexSetContext) const
++ {
++     WordIndexList wordIndexListFiltered;
++     for (auto itWordIndex = wordIndexList.cbegin(); itWordIndex != wordIndexList.cend(); ++ itWordIndex)
++     {
++         int indexEntry = (*itWordIndex).first;
++         int indexWord = (*itWordIndex).second;
++         if (indexWord == indexContextLast && doesEntryExistContext(indexEntry, entryIndexSetContext))
++         {
++             wordIndexListFiltered.append(*itWordIndex);
++         }
++     }
++     return wordIndexListFiltered;
++ }
++ 
+  
+  // Handle the selection of an entry in the auto-completion list.
+  void QsciAPIs::autoCompletionSelected(const QString &selection)
+***************
+*** 747,753 ****
+                      if (im_type <= 0)
+                          cts << api;
+                      else
+!                         cts << (api.left(im_type - 1) + api.mid(tail));
+                  }
+              }
+      }
+--- 801,807 ----
+                      if (im_type <= 0)
+                          cts << api;
+                      else
+!                         cts << (api.left(im_type) + api.mid(tail));
+                  }
+              }
+      }
