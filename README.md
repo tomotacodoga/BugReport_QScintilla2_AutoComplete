@@ -27,3 +27,5 @@ This repository is the project reproducing the following 2 probelms in QScintill
 ![Call tip2 (current)](/images/calltip2-current.png "Call tip2 (current)")
 
 
+4. (Added at 7/12/2016) [Patch-deleteChar](/patch-deleteChar.txt "Patch-deleteChar") is attached
+to add methods for deleting chars.
