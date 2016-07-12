@@ -20,3 +20,10 @@ This repository is the project reproducing the following 2 probelms in QScintill
 ![Call tip (expected)](/images/calltip-expected.png "Call tip (expected)")
 ![Call tip (current)](/images/calltip-current.png "Call tip (current)")
 
+3. (Added at 7/12/2016) Call tip is not filtered by the current context.
+[Patch-calltips](/patch-calltips.txt "Patch-calltips") is attached to fix it.
+
+![Call tip2 (expected)](/images/calltip2-expected.png "Call tip2 (expected)")
+![Call tip2 (current)](/images/calltip2-current.png "Call tip2 (current)")
+
+

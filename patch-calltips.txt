@@ -1,0 +1,60 @@
+*** TestAC/QScintilla_gpl-2.9.2/Qt4Qt5/qsciapis.cpp	2016-07-01 21:42:54.450332600 +0900
+--- TestAC-fixed/QScintilla_gpl-2.9.2/Qt4Qt5/qsciapis.cpp	2016-07-12 11:42:21.772883200 +0900
+***************
+*** 576,581 ****
+--- 576,582 ----
+      {
+          QSet<quint32> entryIndexSet;
+          auto wordIndexList = wordIndexOf(new_context[indexContext]);
++         if (!wordIndexList) continue;
+          for (auto it = wordIndexList->cbegin(); it != wordIndexList->cend(); ++ it)
+          {
+              if (indexContext != (*it).second) continue;
+***************
+*** 760,774 ****
+      }
+      else
+      {
+          const QString &fname = new_context[new_context.count() - 2];
+  
+          // Find everywhere the function name appears in the APIs.
+          const WordIndexList *wil = wordIndexOf(fname);
+  
+          if (wil)
+-             for (int i = 0; i < wil->count(); ++i)
+              {
+!                 const WordIndex &wi = (*wil)[i];
+                  QStringList awords = prep->apiWords(wi.first, wseps, true);
+  
+                  // Check the word is the function name and not part of any
+--- 761,780 ----
+      }
+      else
+      {
++         QList<QSet<quint32>> entryIndexSetContext = getEntryIndexSetContext(new_context);
++ 
+          const QString &fname = new_context[new_context.count() - 2];
+  
+          // Find everywhere the function name appears in the APIs.
+          const WordIndexList *wil = wordIndexOf(fname);
+  
+          if (wil)
+          { 
+!             auto wilFiltered = filterWordIndexByContext(*wil, new_context.count() - 2, entryIndexSetContext);
+! 
+!             for (int i = 0; i < wilFiltered.count(); ++i)
+!             {
+!                 const WordIndex &wi = wilFiltered[i];
+                  QStringList awords = prep->apiWords(wi.first, wseps, true);
+  
+                  // Check the word is the function name and not part of any
+***************
+*** 805,810 ****
+--- 811,817 ----
+                  }
+              }
+          }
++     }
+  
+      return cts;
+  }

@@ -1,0 +1,68 @@
+diff -c -b -r TestAC/QScintilla_gpl-2.9.2/Qt4Qt5/Qsci/qsciscintilla.h TestAC-fixed/QScintilla_gpl-2.9.2/Qt4Qt5/Qsci/qsciscintilla.h
+*** TestAC/QScintilla_gpl-2.9.2/Qt4Qt5/Qsci/qsciscintilla.h	2016-04-18 10:08:48.000000000 +0900
+--- TestAC-fixed/QScintilla_gpl-2.9.2/Qt4Qt5/Qsci/qsciscintilla.h	2016-07-12 12:08:34.387100200 +0900
+***************
+*** 1565,1570 ****
+--- 1565,1577 ----
+      //! \a index.
+      virtual void insertAt(const QString &text, int line, int index);
+  
++     //! Delete the length chars of text at the current position.
++     void deleteChars(int length);
++ 
++     //! Delete the \a length chars of text in the line \a line at the position
++     //! \a index.
++     virtual void deleteCharsAt(int line, int index, int length);
++ 
+      //! If the cursor is either side of a brace character then move it to the
+      //! position of the corresponding brace.
+      virtual void moveToMatchingBrace();
+***************
+*** 2085,2090 ****
+--- 2092,2098 ----
+  
+      bool ensureRW();
+      void insertAtPos(const QString &text, int pos);
++     void deleteCharsAtPos(int pos, int length);
+      static int mapModifiers(int modifiers);
+  
+      QString wordAtPosition(int position) const;
+diff -c -b -r TestAC/QScintilla_gpl-2.9.2/Qt4Qt5/qsciscintilla.cpp TestAC-fixed/QScintilla_gpl-2.9.2/Qt4Qt5/qsciscintilla.cpp
+*** TestAC/QScintilla_gpl-2.9.2/Qt4Qt5/qsciscintilla.cpp	2016-04-18 10:08:48.000000000 +0900
+--- TestAC-fixed/QScintilla_gpl-2.9.2/Qt4Qt5/qsciscintilla.cpp	2016-07-12 12:10:32.554347600 +0900
+***************
+*** 2136,2141 ****
+--- 2136,2168 ----
+  }
+  
+  
++ // Delete the length chars of text at the current position.
++ void QsciScintilla::deleteChars(int length)
++ {
++     deleteCharsAtPos(-1, length);
++ }
++ 
++ 
++ // Delete the length chars of text in the line at the position index.
++ void QsciScintilla::deleteCharsAt(int line, int index, int length)
++ {
++     deleteCharsAtPos(positionFromLineIndex(line, index), length);
++ }
++ 
++ 
++ void QsciScintilla::deleteCharsAtPos(int pos, int length)
++ {
++     bool ro = ensureRW();
++ 
++     SendScintilla(SCI_BEGINUNDOACTION);
++     SendScintilla(SCI_DELETERANGE, pos, length);
++     SendScintilla(SCI_ENDUNDOACTION);
++ 
++     setReadOnly(ro);
++ 
++ }
++ 
++ 
+  // Begin a sequence of undoable actions.
+  void QsciScintilla::beginUndoAction()
+  {
