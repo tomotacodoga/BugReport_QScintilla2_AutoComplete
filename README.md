@@ -16,16 +16,14 @@ This repository is the project reproducing the following 2 probelms in QScintill
     > ![Method completion3 (current)](/images/method-completion2-separator-current.png "Method completion3 (current)")
 
 2. Call tip is incorrectly trimmed at setCallTipStyle(CallTipsContext).
-
-![Call tip (expected)](/images/calltip-expected.png "Call tip (expected)")
-![Call tip (current)](/images/calltip-current.png "Call tip (current)")
+  > ![Call tip (expected)](/images/calltip-expected.png "Call tip (expected)")
+  > ![Call tip (current)](/images/calltip-current.png "Call tip (current)")
 
 3. (Added at 7/12/2016) Call tip is not filtered by the current context.
 [Patch-calltips](/patch-calltips.txt "Patch-calltips") is attached to fix it.
 
-![Call tip2 (expected)](/images/calltip2-expected.png "Call tip2 (expected)")
-![Call tip2 (current)](/images/calltip2-current.png "Call tip2 (current)")
-
+  > ![Call tip2 (expected)](/images/calltip2-expected.png "Call tip2 (expected)")
+  > ![Call tip2 (current)](/images/calltip2-current.png "Call tip2 (current)")
 
 4. (Added at 7/12/2016) [Patch-deleteChar](/patch-deleteChar.txt "Patch-deleteChar") is attached
 to add methods for deleting chars.
